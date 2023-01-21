@@ -9,9 +9,10 @@ def get_main_kb() -> ReplyKeyboardMarkup:
     return keyboard
 
 
-def get_back_kb() -> InlineKeyboardMarkup:
+def register_check_kb() -> ReplyKeyboardMarkup:
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add("Главное меню")
+    keyboard.add("Исправить данные", "Завершить")
     return keyboard
+
 
 
