@@ -101,7 +101,8 @@ async def get_address(message: types.Message, state: FSMContext) -> None:
 
 
 @dp.message_handler(state=RegisterStatesGroup.phone)
-async def get_phone_number(message: types.Message, state: FSMContext) -> None:
+async def get_phone_number(message: types.Message,
+                           state: FSMContext) -> None:
     async with state.proxy() as data:
         data["phone"] = f"+375{message.text}"
         await message.answer("Пожалуйста, проверьте правильность "
@@ -110,8 +111,7 @@ async def get_phone_number(message: types.Message, state: FSMContext) -> None:
                              f"Имя:   {data['name']} \n"
                              f"Компания:   {data['company']}\n"
                              f"Адрес:   {data['address']}\n"
-                             f"Телефон:   {data['phone']}"
-                             ,
+                             f"Телефон:   {data['phone']}",
                              reply_markup=register_check_kb())
         await RegisterStatesGroup.next()
 
