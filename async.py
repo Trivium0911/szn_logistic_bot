@@ -1,4 +1,5 @@
-from sqlite import start_db, edit_profile, create_user, check_user
+from sqlite import start_db, edit_profile, create_user, check_user, \
+    edit_deliver, get_user_info
 from keyboards import get_main_kb, register_check_kb, deliver_kb
 from states import RegisterStatesGroup, DeliverStatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -6,7 +7,7 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ReplyKeyboardRemove
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from sync import get_user
+from sync import get_hour, get_day
 import json
 import os
 
@@ -138,13 +139,13 @@ async def get_deliver_comment(message: types.Message,
                               state: FSMContext) -> None:
     async with state.proxy() as data:
         data['comments'] = message.text
+        data['package'] =  f"Адрес доставки:   {data['deliver_address']} \n" \
+                           f"Ориентировочное время готовности заказа:   " \
+                           f"{data['getting_time']}\n" \
+                           f"Комментарий к заказу:   {data['comments']}\n"
     await message.answer("Пожалуйста, проверьте правильность "
                          "введенных данных. Если всё верно, "
-                         "нажмите кнопку 'Завершить'.\n\n"
-                         f"Адрес доставки:   {data['deliver_address']} \n"
-                         f"Ориентировочное время готовности заказа:   "
-                         f"{data['getting_time']}\n"
-                         f"Комментарий к заказу:   {data['comments']}\n",
+                         "нажмите кнопку 'Завершить'.\n\n" + data['package'],
                          reply_markup=register_check_kb())
     await DeliverStatesGroup.next()
 
@@ -158,13 +159,17 @@ async def deliver_fix(message: types.Message, state: FSMContext) -> None:
 
 @dp.message_handler(Text(equals="Завершить"),
                     state=DeliverStatesGroup.finish_state)
-async def start_dack_func(message: types.Message, state: FSMContext) -> None:
+async def start_back_func(message: types.Message, state: FSMContext) -> None:
     async with state.proxy() as data:
-       # await edit_profile(state=state, user_id=message.from_user.id)
+        hour = get_hour()
+        await edit_deliver(state, message.from_user.id, hour)
+        await bot.send_message(chat_id=os.getenv('CHAT_ID'),
+                text=get_user_info(message.from_user.id) + data['package'],
+                             parse_mode='HTML')
         await state.finish()
-
     await message.answer(text="Вы вернулись в главное меню",
                             reply_markup=get_main_kb())
+
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
