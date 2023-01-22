@@ -15,14 +15,6 @@ def get_day() -> int:
     return week_day
 
 
-def get_user(user_id) -> str:
-    with open('users.json', 'r') as file:
-        load = json.load(file)
-        user_info = f"Имя: {load[user_id]['name']} \n" \
-                    f"Компания: {load[user_id]['company']} \n" \
-                    f"Адрес: {load[user_id]['address']} \n" \
-                    f"Телефон: {load[user_id]['phone']} \n"
-        return user_info
 
 
 

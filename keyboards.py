@@ -1,5 +1,4 @@
-from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardButton
-from aiogram.types import InlineKeyboardMarkup
+from aiogram.types import ReplyKeyboardMarkup
 
 
 def get_main_kb() -> ReplyKeyboardMarkup:
@@ -15,4 +14,8 @@ def register_check_kb() -> ReplyKeyboardMarkup:
     return keyboard
 
 
+def deliver_kb() -> ReplyKeyboardMarkup:
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard.add("Несколько доставок", "Одна доставка")
+    return keyboard
 

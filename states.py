@@ -15,3 +15,4 @@ class DeliverStatesGroup(StatesGroup):
     deliver_address = State()
     getting_time = State()
     comments = State()
+    finish_state = State()
