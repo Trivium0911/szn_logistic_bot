@@ -9,8 +9,8 @@ async def start_db():
                 "name TEXT, company TEXT, address TEXT, phone TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS orders(id INTEGER PRIMARY KEY "
                 "AUTOINCREMENT, user_id TEXT, deliver_address TEXT, "
-                "collection_time TEXT, comments TEXT, date_created DATE, "
-                "hour INTEGER)")
+                "count INTEGER, collection_time TEXT, comments TEXT, "
+                "date_created DATE, hour INTEGER)")
     db.commit()
 
 
@@ -43,11 +43,12 @@ async def edit_profile(state, user_id):
 
 async def edit_deliver(state, user_id, hour):
     async with state.proxy() as data:
-        cur.execute("INSERT INTO orders(user_id, deliver_address, "
+        cur.execute("INSERT INTO orders(user_id, deliver_address, count,"
                     "collection_time, comments, date_created, hour)"
-                    " VALUES('{}', '{}', '{}', '{}', CURRENT_DATE, "
+                    " VALUES('{}', '{}', '{}', '{}', '{}', CURRENT_DATE, "
                     "'{}')".format(user_id, data['deliver_address'],
-                    data['getting_time'], data['comments'], hour)
+                                   data['count'], data['getting_time'],
+                                   data['comments'], hour)
                     )
         db.commit()
 

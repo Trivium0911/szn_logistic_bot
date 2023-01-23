@@ -2,7 +2,7 @@ from aiogram.types import ReplyKeyboardMarkup
 
 
 def get_main_kb() -> ReplyKeyboardMarkup:
-    start_buttons = ['Оформить заказ', 'Регистрация']
+    start_buttons = ['Регистрация', 'Оформить заказ']
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.add(*start_buttons)
     return keyboard
@@ -16,6 +16,11 @@ def register_check_kb() -> ReplyKeyboardMarkup:
 
 def deliver_kb() -> ReplyKeyboardMarkup:
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add("Несколько доставок", "Одна доставка")
+    keyboard.add("Сформировать доставку").add("Назад")
     return keyboard
 
+
+def cancel_kb() -> ReplyKeyboardMarkup:
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard.add('Отмена')
+    return keyboard

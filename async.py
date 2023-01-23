@@ -1,6 +1,6 @@
 from sqlite import start_db, edit_profile, create_user, check_user, \
     edit_deliver, get_user_info
-from keyboards import get_main_kb, register_check_kb, deliver_kb
+from keyboards import get_main_kb, register_check_kb, deliver_kb, cancel_kb
 from states import RegisterStatesGroup, DeliverStatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram import Bot, Dispatcher, executor, types
@@ -8,6 +8,7 @@ from aiogram.types import ReplyKeyboardRemove
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
 from sync import get_hour, get_day
+import asyncio
 import json
 import os
 
@@ -21,8 +22,28 @@ async def on_startup(_):
     await start_db()
 
 
+@dp.message_handler(Text(equals="Отмена"), commands='Отмена')
+@dp.message_handler(Text(equals='Отмена', ignore_case=True), state='*')
+async def cansel_func(message: types.Message, state: FSMContext) -> None:
+    current_state = await state.get_state()
+    match current_state:
+        case None:
+            return
+    await state.finish()
+    await message.answer('Добро пожаловать',
+                         reply_markup=get_main_kb())
+    await message.delete()
+
+
 @dp.message_handler(commands='start')
 async def start_func(message: types.Message) -> None:
+    await message.answer('Добро пожаловать',
+                         reply_markup=get_main_kb())
+    await message.delete()
+
+
+@dp.message_handler(Text(equals="Назад"))
+async def start_back_to_menu(message: types.Message) -> None:
     await message.answer('Добро пожаловать',
                          reply_markup=get_main_kb())
     await message.delete()
@@ -42,8 +63,10 @@ async def start_func(message: types.Message, state: FSMContext) -> None:
 @dp.message_handler(Text(equals="Исправить данные"),
                     state=RegisterStatesGroup.finish_state)
 async def register_fix(message: types.Message, state: FSMContext) -> None:
-    await message.answer("Пожалуйста, введите своё имя:")
     await RegisterStatesGroup.name.set()
+    await message.answer("Пожалуйста, введите своё имя:",
+                         reply_markup=cancel_kb())
+
 
 
 @dp.message_handler(Text(equals="Оформить заказ"))
@@ -62,33 +85,41 @@ async def make_registration(message: types.Message) -> None:
     await create_user(user_id=message.from_user.id)
     await message.reply("Вы перешли в форму регистрации.",
                         reply_markup=types.ReplyKeyboardRemove())
-    await message.answer("Пожалуйста, введите своё имя:")
     await RegisterStatesGroup.name.set()
+    await message.answer("Пожалуйста, введите своё имя:",
+                         reply_markup=cancel_kb())
+
 
 
 @dp.message_handler(state=RegisterStatesGroup.name)
 async def get_name(message: types.Message,state: FSMContext) -> None:
     async with state.proxy() as data:
         data['name'] = message.text
-    await message.reply("Пожалуйста, введите название компании:")
     await RegisterStatesGroup.next()
+    await message.reply("Пожалуйста, введите название компании:",
+                         reply_markup=cancel_kb())
+
 
 
 @dp.message_handler(state=RegisterStatesGroup.company)
 async def get_company(message: types.Message, state: FSMContext) -> None:
     async with state.proxy() as data:
         data['company'] = message.text
-    await message.reply("Пожалуйста, введите свой адрес компании:")
     await RegisterStatesGroup.next()
+    await message.reply("Пожалуйста, введите свой адрес компании:",
+                         reply_markup=cancel_kb())
+
 
 
 @dp.message_handler(state=RegisterStatesGroup.address)
 async def get_address(message: types.Message, state: FSMContext) -> None:
     async with state.proxy() as data:
         data['address'] = message.text
-    await message.reply("Пожалуйста, введите номер телефона для связи"
-                         "в формате +375XXXXXXXXX (без +375 и пробела):")
     await RegisterStatesGroup.next()
+    await message.reply("Пожалуйста, введите номер телефона для связи"
+                         "в формате +375XXXXXXXXX (без +375 и пробела):",
+                         reply_markup=cancel_kb())
+
 
 
 @dp.message_handler(state=RegisterStatesGroup.phone)
@@ -96,7 +127,8 @@ async def get_phone_number(message: types.Message,
                            state: FSMContext) -> None:
     async with state.proxy() as data:
         data["phone"] = f"+375{message.text}"
-        await message.answer("Пожалуйста, проверьте правильность "
+    await RegisterStatesGroup.next()
+    await message.answer("Пожалуйста, проверьте правильность "
                              "введенных данных. Если всё верно, "
                              "нажмите кнопку 'Завершить'.\n\n"
                              f"Имя:   {data['name']} \n"
@@ -104,14 +136,17 @@ async def get_phone_number(message: types.Message,
                              f"Адрес:   {data['address']}\n"
                              f"Телефон:   {data['phone']}",
                              reply_markup=register_check_kb())
-        await RegisterStatesGroup.next()
 
 
-@dp.message_handler(Text(equals="Одна доставка"))
+
+@dp.message_handler(Text(equals="Сформировать доставку"))
 async def make_single_order(message: types.Message) -> None:
-    await message.answer("Вы выбрали одну доставку. Пожалуйста, "
-                         "введите адрес доставки: ")
     await DeliverStatesGroup.deliver_address.set()
+    await message.answer("Пожалуйста, введите адрес доставки. "
+                         "Если таковых несколько, введите адрес каждой "
+                         "на отдельной строке в одном сообщении: ",
+                         reply_markup=cancel_kb())
+
 
 
 @dp.message_handler(state=DeliverStatesGroup.deliver_address)
@@ -119,9 +154,12 @@ async def get_deliver_address(message: types.Message,
                               state: FSMContext) -> None:
     async with state.proxy() as data:
         data['deliver_address'] = message.text
-    await message.reply("Пожалуйста, введите ориентировочное время "
-                        "готовности заказа в формате 24ч:")
+        data['count'] = len(message.text.split('\n'))
     await DeliverStatesGroup.next()
+    await message.reply("Пожалуйста, введите ориентировочное время "
+                        "готовности заказа в формате 24ч.:",
+                         reply_markup=cancel_kb())
+
 
 
 @dp.message_handler(state=DeliverStatesGroup.getting_time)
@@ -129,9 +167,11 @@ async def get_deliver_time(message: types.Message,
                               state: FSMContext) -> None:
     async with state.proxy() as data:
         data['getting_time'] = message.text
-    await message.reply("Пожалуйста, напишите комментарии к заказу. "
-                        "Если таковых нет, напишите знак '.':")
     await DeliverStatesGroup.next()
+    await message.reply("Пожалуйста, напишите комментарии к заказу. "
+                        "Если таковых нет, напишите знак '.':",
+                         reply_markup=cancel_kb())
+
 
 
 @dp.message_handler(state=DeliverStatesGroup.comments)
@@ -139,22 +179,27 @@ async def get_deliver_comment(message: types.Message,
                               state: FSMContext) -> None:
     async with state.proxy() as data:
         data['comments'] = message.text
-        data['package'] =  f"Адрес доставки:   {data['deliver_address']} \n" \
+        data['package'] =  f"Адрес(а) доставки:  \n\n" \
+                           f"{data['deliver_address']} \n\n" \
+                           f"Всего заказов:    {data['count']} \n" \
                            f"Ориентировочное время готовности заказа:   " \
-                           f"{data['getting_time']}\n" \
+                           f"{data['getting_time']}\n\n" \
                            f"Комментарий к заказу:   {data['comments']}\n"
+    await DeliverStatesGroup.next()
     await message.answer("Пожалуйста, проверьте правильность "
                          "введенных данных. Если всё верно, "
                          "нажмите кнопку 'Завершить'.\n\n" + data['package'],
                          reply_markup=register_check_kb())
-    await DeliverStatesGroup.next()
+
 
 
 @dp.message_handler(Text(equals="Исправить данные"),
                     state=DeliverStatesGroup.finish_state)
 async def deliver_fix(message: types.Message, state: FSMContext) -> None:
-    await message.answer("Пожалуйста, введите адрес доставки: ")
     await DeliverStatesGroup.deliver_address.set()
+    await message.answer("Пожалуйста, введите адрес доставки: ",
+                         reply_markup=cancel_kb())
+
 
 
 @dp.message_handler(Text(equals="Завершить"),
@@ -164,9 +209,10 @@ async def start_back_func(message: types.Message, state: FSMContext) -> None:
         hour = get_hour()
         await edit_deliver(state, message.from_user.id, hour)
         await bot.send_message(chat_id=os.getenv('CHAT_ID'),
-                text=get_user_info(message.from_user.id) + data['package'],
+                text=f"<b>{get_user_info(message.from_user.id)}"
+                     f"{data['package']}</b>",
                              parse_mode='HTML')
-        await state.finish()
+    await state.finish()
     await message.answer(text="Вы вернулись в главное меню",
                             reply_markup=get_main_kb())
 
