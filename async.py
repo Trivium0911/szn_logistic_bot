@@ -17,7 +17,7 @@ import os
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 bot = Bot(BOT_TOKEN)
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
-owner_id = (os.getenv('OWNER_ID'), )
+owner_id = (os.getenv("OWNER_ID"), os.getenv("CREATOR_ID"))
 
 
 async def on_startup(_):
@@ -68,8 +68,9 @@ async def start_func(message: types.Message, state: FSMContext) -> None:
         await edit_profile(state=state, user_id=message.from_user.id)
         await state.finish()
 
-    await message.answer(text="Вы вернулись в главное меню",
-                            reply_markup=get_main_kb())
+    await message.answer(text="Операция успешно завершена. \n"
+                              "Вы вернулись в главное меню",
+                              reply_markup=get_main_kb())
 
 
 @dp.message_handler(Text(equals="Исправить данные"),
@@ -223,12 +224,13 @@ async def start_back_func(message: types.Message, state: FSMContext) -> None:
         hour = get_hour()
         await edit_deliver(state, message.from_user.id, hour)
         await bot.send_message(chat_id=os.getenv('CHAT_ID'),
-                text=f"{get_user_info(message.from_user.id)} "
+                text=f"{get_user_info(message.from_user.id)}\n"
                      f"***{data['package']}***",
                              parse_mode='Markdown')
     await state.finish()
-    await message.answer(text="Вы вернулись в главное меню",
-                            reply_markup=get_main_kb())
+    await message.answer(text="Операция успешно завершена. \n"
+                              "Вы вернулись в главное меню",
+                               reply_markup=get_main_kb())
 
 
 @dp.message_handler(Text(equals="За последний день"))
