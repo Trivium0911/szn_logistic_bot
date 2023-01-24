@@ -1,7 +1,7 @@
 import sqlite3 as sq
 
 
-async def start_db():
+async def start_db() -> None:
     global db, cur
     db = sq.connect('database.db')
     cur = db.cursor()
@@ -14,13 +14,13 @@ async def start_db():
     db.commit()
 
 
-def check_user(user_id):
+def check_user(user_id) -> tuple:
     user = cur.execute("SELECT 1 FROM users "
                        "WHERE user_id == '{}'".format(user_id)).fetchone()
     return user
 
 
-async def create_user(user_id):
+async def create_user(user_id) -> None:
     user = cur.execute("SELECT 1 FROM users "
                        "WHERE user_id == '{}'".format(user_id)).fetchone()
     match user:
@@ -30,7 +30,7 @@ async def create_user(user_id):
             db.commit()
 
 
-async def edit_profile(state, user_id):
+async def edit_profile(state, user_id) -> None:
     async with state.proxy() as data:
         cur.execute("UPDATE users SET name = '{}', company = '{}', "
                     "address = '{}', phone = '{}' "
@@ -41,7 +41,7 @@ async def edit_profile(state, user_id):
         db.commit()
 
 
-async def edit_deliver(state, user_id, hour):
+async def edit_deliver(state, user_id, hour) -> None:
     async with state.proxy() as data:
         cur.execute("INSERT INTO orders(user_id, deliver_address, count,"
                     "collection_time, comments, date_created, hour)"
@@ -60,9 +60,13 @@ def get_user_info(user_id) -> str:
     return f"Имя:   {user_info[0][0]} \n" \
            f"Компания:   {user_info[0][1]} \n" \
            f"Адрес:   {user_info[0][2]} \n" \
-           f"Телефон:   {user_info[0][3]} \n\n"
+           f"Телефон:   [{user_info[0][3]} ](tel:{user_info[0][3]}) \n\n"
 
 
-
-
+def get_statistic(days) -> str:
+    stats = cur.execute("SELECT SUM(count) FROM orders WHERE"
+                        " CURRENT_DATE - date_created <= '{}'"
+                        .format(days)).fetchone()
+    return f"Количество заказов:   {stats[0]} \n" \
+           f"В среднем за день:   {round(stats[0] / days, 3)} \n"
 
