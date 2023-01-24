@@ -223,8 +223,8 @@ async def start_back_func(message: types.Message, state: FSMContext) -> None:
         hour = get_hour()
         await edit_deliver(state, message.from_user.id, hour)
         await bot.send_message(chat_id=os.getenv('CHAT_ID'),
-                text=f"{get_user_info(message.from_user.id)}"
-                     f"{data['package']}",
+                text=f"{get_user_info(message.from_user.id)} "
+                     f"***{data['package']}***",
                              parse_mode='Markdown')
     await state.finish()
     await message.answer(text="Вы вернулись в главное меню",

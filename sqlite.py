@@ -57,10 +57,10 @@ def get_user_info(user_id) -> str:
     user_info = cur.execute("SELECT name, company, address, phone "
                             "FROM users WHERE user_id = "
                             "'{}'".format(user_id)).fetchall()
-    return f"Имя:   {user_info[0][0]} \n" \
+    return f"***Имя:   {user_info[0][0]} \n" \
            f"Компания:   {user_info[0][1]} \n" \
-           f"Адрес:   {user_info[0][2]} \n" \
-           f"Телефон:   [{user_info[0][3]} ](tel:{user_info[0][3]}) \n\n"
+           f"Адрес: {user_info[0][2]} \n" \
+           f"Телефон:***   [{user_info[0][3]} ](tel:{user_info[0][3]}) \n"
 
 
 def get_statistic(days) -> str:
