@@ -144,7 +144,7 @@ async def get_address(message: types.Message, state: FSMContext) -> None:
     async with state.proxy() as data:
         data['address'] = message.text
     await RegisterStatesGroup.next()
-    await message.reply("Пожалуйста, введите номер телефона для связи"
+    await message.reply("Пожалуйста, введите номер телефона для связи "
                          "в формате +375XXXXXXXXX (без +375 и пробела):",
                          reply_markup=get_cancel_kb())
 
