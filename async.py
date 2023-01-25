@@ -24,6 +24,18 @@ async def on_startup(_):
     await start_db()
 
 
+@dp.message_handler(Text(equals="Отмена"))
+async def statistic_menu(message: types.Message) -> None:
+    match str(message.from_user.id) in owner_id:
+        case True:
+            await message.answer('Добро пожаловать',
+                                 reply_markup=get_admin_kb())
+        case False:
+            await message.answer('Добро пожаловать',
+                                 reply_markup=get_main_kb())
+    await message.delete()
+
+
 @dp.message_handler(Text(equals="Отмена"), commands='Отмена')
 @dp.message_handler(Text(equals='Отмена', ignore_case=True), state='*')
 async def cansel_func(message: types.Message, state: FSMContext) -> None:
@@ -51,8 +63,10 @@ async def start_func(message: types.Message) -> None:
 
 @dp.message_handler(Text(equals="Статистика"))
 async def statistic_menu(message: types.Message) -> None:
-    await message.answer('Добро пожаловать',
+    await message.answer('Вы перешли в раздел статистики.',
                          reply_markup=get_stats_kb())
+    await message.delete()
+
 
 @dp.message_handler(Text(equals="Назад"))
 async def start_back_to_menu(message: types.Message) -> None:
@@ -66,11 +80,16 @@ async def start_back_to_menu(message: types.Message) -> None:
 async def start_func(message: types.Message, state: FSMContext) -> None:
     async with state.proxy() as data:
         await edit_profile(state=state, user_id=message.from_user.id)
-        await state.finish()
-
-    await message.answer(text="Операция успешно завершена. \n"
-                              "Вы вернулись в главное меню",
-                              reply_markup=get_main_kb())
+    await state.finish()
+    match str(message.from_user.id) in owner_id:
+        case True:
+            await message.answer(text="Операция успешно завершена. \n"
+                                      "Вы вернулись в главное меню",
+                                       reply_markup=get_admin_kb())
+        case False:
+            await message.answer(text="Операция успешно завершена. \n"
+                                      "Вы вернулись в главное меню",
+                                       reply_markup=get_main_kb())
 
 
 @dp.message_handler(Text(equals="Исправить данные"),
@@ -79,7 +98,6 @@ async def register_fix(message: types.Message, state: FSMContext) -> None:
     await RegisterStatesGroup.name.set()
     await message.answer("Пожалуйста, введите своё имя:",
                          reply_markup=get_cancel_kb())
-
 
 
 @dp.message_handler(Text(equals="Оформить заказ"))
@@ -103,7 +121,6 @@ async def make_registration(message: types.Message) -> None:
                          reply_markup=get_cancel_kb())
 
 
-
 @dp.message_handler(state=RegisterStatesGroup.name)
 async def get_name(message: types.Message,state: FSMContext) -> None:
     async with state.proxy() as data:
@@ -111,7 +128,6 @@ async def get_name(message: types.Message,state: FSMContext) -> None:
     await RegisterStatesGroup.next()
     await message.reply("Пожалуйста, введите название компании:",
                          reply_markup=get_cancel_kb())
-
 
 
 @dp.message_handler(state=RegisterStatesGroup.company)
@@ -123,7 +139,6 @@ async def get_company(message: types.Message, state: FSMContext) -> None:
                          reply_markup=get_cancel_kb())
 
 
-
 @dp.message_handler(state=RegisterStatesGroup.address)
 async def get_address(message: types.Message, state: FSMContext) -> None:
     async with state.proxy() as data:
@@ -132,7 +147,6 @@ async def get_address(message: types.Message, state: FSMContext) -> None:
     await message.reply("Пожалуйста, введите номер телефона для связи"
                          "в формате +375XXXXXXXXX (без +375 и пробела):",
                          reply_markup=get_cancel_kb())
-
 
 
 @dp.message_handler(state=RegisterStatesGroup.phone)
@@ -151,7 +165,6 @@ async def get_phone_number(message: types.Message,
                              reply_markup=get_register_check_kb())
 
 
-
 @dp.message_handler(Text(equals="Сформировать доставку"))
 async def make_single_order(message: types.Message) -> None:
     await DeliverStatesGroup.deliver_address.set()
@@ -159,7 +172,6 @@ async def make_single_order(message: types.Message) -> None:
                          "Если таковых несколько, введите адрес каждой "
                          "на отдельной строке в одном сообщении: ",
                          reply_markup=get_cancel_kb())
-
 
 
 @dp.message_handler(state=DeliverStatesGroup.deliver_address)
@@ -174,7 +186,6 @@ async def get_deliver_address(message: types.Message,
                          reply_markup=get_cancel_kb())
 
 
-
 @dp.message_handler(state=DeliverStatesGroup.getting_time)
 async def get_deliver_time(message: types.Message,
                               state: FSMContext) -> None:
@@ -182,9 +193,8 @@ async def get_deliver_time(message: types.Message,
         data['getting_time'] = message.text
     await DeliverStatesGroup.next()
     await message.reply("Пожалуйста, напишите комментарии к заказу. "
-                        "Если таковых нет, напишите знак '.':",
+                        "Если таковых нет, напишите знак ' . ' (точка) :",
                          reply_markup=get_cancel_kb())
-
 
 
 @dp.message_handler(state=DeliverStatesGroup.comments)
@@ -205,7 +215,6 @@ async def get_deliver_comment(message: types.Message,
                          reply_markup=get_register_check_kb())
 
 
-
 @dp.message_handler(Text(equals="Исправить данные"),
                     state=DeliverStatesGroup.finish_state)
 async def deliver_fix(message: types.Message, state: FSMContext) -> None:
@@ -214,7 +223,6 @@ async def deliver_fix(message: types.Message, state: FSMContext) -> None:
                          "Если таковых несколько, введите адрес каждой "
                          "на отдельной строке в одном сообщении: ",
                          reply_markup=get_cancel_kb())
-
 
 
 @dp.message_handler(Text(equals="Завершить"),
@@ -228,9 +236,15 @@ async def start_back_func(message: types.Message, state: FSMContext) -> None:
                      f"***{data['package']}***",
                              parse_mode='Markdown')
     await state.finish()
-    await message.answer(text="Операция успешно завершена. \n"
-                              "Вы вернулись в главное меню",
-                               reply_markup=get_main_kb())
+    match str(message.from_user.id) in owner_id:
+        case True:
+            await message.answer(text="Операция успешно завершена. \n"
+                                      "Вы вернулись в главное меню",
+                                 reply_markup=get_admin_kb())
+        case False:
+            await message.answer(text="Операция успешно завершена. \n"
+                                      "Вы вернулись в главное меню",
+                                 reply_markup=get_main_kb())
 
 
 @dp.message_handler(Text(equals="За последний день"))
@@ -248,12 +262,14 @@ async def statistic_7_days(message: types.Message) -> None:
                          f"{result}",
                          reply_markup=get_admin_kb())
 
+
 @dp.message_handler(Text(equals="Месяц"))
 async def statistic_month(message: types.Message) -> None:
     result = get_statistic(30)
     await message.answer(f"Статистика за месяц: \n\n"
                          f"{result}",
                          reply_markup=get_admin_kb())
+
 
 @dp.message_handler(Text(equals="Год"))
 async def statistic_year(message: types.Message) -> None:
