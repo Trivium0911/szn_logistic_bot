@@ -1,4 +1,5 @@
 import sqlite3 as sq
+from aiogram.dispatcher import FSMContext
 
 
 async def start_db() -> None:
@@ -14,13 +15,13 @@ async def start_db() -> None:
     db.commit()
 
 
-def check_user(user_id) -> tuple:
+def check_user(user_id: str) -> tuple:
     user = cur.execute("SELECT 1 FROM users "
                        "WHERE user_id == '{}'".format(user_id)).fetchone()
     return user
 
 
-async def create_user(user_id) -> None:
+async def create_user(user_id: str) -> None:
     user = cur.execute("SELECT 1 FROM users "
                        "WHERE user_id == '{}'".format(user_id)).fetchone()
     match user:
@@ -30,7 +31,7 @@ async def create_user(user_id) -> None:
             db.commit()
 
 
-async def edit_profile(state, user_id) -> None:
+async def edit_profile(state: FSMContext, user_id: str) -> None:
     async with state.proxy() as data:
         cur.execute("UPDATE users SET name = '{}', company = '{}', "
                     "address = '{}', phone = '{}' "
@@ -41,7 +42,7 @@ async def edit_profile(state, user_id) -> None:
         db.commit()
 
 
-async def edit_deliver(state, user_id, hour) -> None:
+async def edit_deliver(state: FSMContext, user_id: str, hour: int) -> None:
     async with state.proxy() as data:
         cur.execute("INSERT INTO orders(user_id, deliver_address, count,"
                     "collection_time, comments, date_created, hour)"
@@ -53,7 +54,7 @@ async def edit_deliver(state, user_id, hour) -> None:
         db.commit()
 
 
-def get_user_info(user_id) -> str:
+def get_user_info(user_id: str) -> str:
     user_info = cur.execute("SELECT name, company, address, phone "
                             "FROM users WHERE user_id = "
                             "'{}'".format(user_id)).fetchall()
@@ -63,7 +64,7 @@ def get_user_info(user_id) -> str:
            f"Телефон:***   [{user_info[0][3]} ](tel:{user_info[0][3]}) \n"
 
 
-def get_statistic(days) -> str:
+def get_statistic(days: int) -> str:
     stats = cur.execute("SELECT SUM(count) FROM orders WHERE"
                         " CURRENT_DATE - date_created <= '{}'"
                         .format(days)).fetchone()

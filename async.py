@@ -1,14 +1,15 @@
-from sqlite import start_db, edit_profile, create_user, check_user, \
-    edit_deliver, get_user_info, get_statistic
 from keyboards import get_main_kb, get_register_check_kb, get_deliver_kb, \
     get_cancel_kb, get_admin_kb, get_stats_kb
-from states import RegisterStatesGroup, DeliverStatesGroup
+from sync import get_hour, get_day, get_schedule_date, get_schedule_hours
+from sqlite import start_db, edit_profile, create_user, check_user, \
+    edit_deliver, get_user_info, get_statistic
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from states import RegisterStatesGroup, DeliverStatesGroup
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ReplyKeyboardRemove
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from sync import get_hour, get_day
 import asyncio
 import json
 import os
@@ -17,10 +18,13 @@ import os
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 bot = Bot(BOT_TOKEN)
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
+scheduler = AsyncIOScheduler()
 owner_id = (os.getenv("OWNER_ID"), os.getenv("CREATOR_ID"))
+CHAT_ID = os.getenv('CHAT_ID')
 
 
 async def on_startup(_):
+    scheduler.start()
     await start_db()
 
 
@@ -230,11 +234,30 @@ async def deliver_fix(message: types.Message, state: FSMContext) -> None:
 async def start_back_func(message: types.Message, state: FSMContext) -> None:
     async with state.proxy() as data:
         hour = get_hour()
+        day = get_day()
         await edit_deliver(state, message.from_user.id, hour)
-        await bot.send_message(chat_id=os.getenv('CHAT_ID'),
-                text=f"{get_user_info(message.from_user.id)}\n"
-                     f"***{data['package']}***",
-                             parse_mode='Markdown')
+        message_answer = f"{get_user_info(message.from_user.id)}\n" \
+                         f"***{data['package']}***"
+        match day in (5,6):
+            case True if day == 5:
+                scheduler.add_job(bot.send_message(chat_id=CHAT_ID,
+                                       text=message_answer,
+                                       parse_mode='Markdown'), "date",
+                                  run_date=get_schedule_date(2), args=(dp,))
+            case True if day == 6:
+                scheduler.add_job(bot.send_message(chat_id=CHAT_ID,
+                                                   text=message_answer,
+                                       parse_mode='Markdown'), "date",
+                                  run_date=get_schedule_date(1), args=(dp,))
+            case False if hour not in [i for i in range(6, 18)]:
+                scheduler.add_job(bot.send_message(chat_id=CHAT_ID,
+                                           text=message_answer,
+                                           parse_mode='Markdown'), "date",
+                                  run_date=get_schedule_hours(7), args=(dp,))
+            case False if 6 <= hour < 18:
+                await bot.send_message(chat_id=CHAT_ID,
+                                       text=message_answer,
+                                       parse_mode='Markdown')
     await state.finish()
     match str(message.from_user.id) in owner_id:
         case True:
