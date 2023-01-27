@@ -212,37 +212,41 @@ async def start_back_func(message: types.Message, state: FSMContext) -> None:
                          f"***{data['package']}***"
         match day in (5,6):
             case True if day == 5:
-                await message.answer(f"❗️Ваша заявка перенесена на "
-                                     f"{get_schedule_date(2)}❗️")
-                message_answer += f"\n\n ❗️❗️❗️ Перенесено на " \
+                await message.answer(f"❗️ Ваша заявка перенесена на "
+                                     f"{get_schedule_date(2)}❗️",
+                                     parse_mode='Markdown')
+                message_answer += f"\n ❗️❗️❗️ Перенесено на " \
                                   f"{get_schedule_date(2)} ❗️❗️❗️"
                 await bot.send_message(chat_id=CHAT_ID,
                                        text=message_answer,
                                        parse_mode='Markdown')
 
             case True if day == 6:
-                await message.answer(f"❗️Ваша заявка перенесена на "
-                                     f"{get_schedule_date(1)}❗️")
-                message_answer += f"\n\n ❗️❗️❗️ Перенесено на " \
+                await message.answer(f"❗️ Ваша заявка перенесена на "
+                                     f"{get_schedule_date(1)}❗️",
+                                     parse_mode='Markdown')
+                message_answer += f"\n ❗️❗️❗️ Перенесено на " \
                                   f"{get_schedule_date(1)} ❗️❗️❗️"
                 await bot.send_message(chat_id=CHAT_ID,
                                        text=message_answer,
                                        parse_mode='Markdown')
 
             case False if day == 4 and hour not in [i for i in range(6, 18)]:
-                    await message.answer(f"❗️Ваша заявка перенесена на "
-                                    f"{get_schedule_date(2)}❗️")
-                    message_answer += f"\n\n ❗️❗️❗️ Перенесено на " \
-                          f"{get_schedule_date(2)} ❗️❗️❗️"
+                    await message.answer(f"❗️ Ваша заявка перенесена на "
+                                    f"{get_schedule_date(3)} ❗️",
+                                         parse_mode='Markdown')
+                    message_answer += f"\n ❗️❗️❗️ Перенесено на " \
+                          f"{get_schedule_date(3)} ❗️❗️❗️"
                     await bot.send_message(chat_id=CHAT_ID,
                                text=message_answer,
                                parse_mode='Markdown')
 
             case False if hour not in [i for i in range(6, 18)]:
-                await message.answer(f"❗️Ваша заявка перенесена на "
-                                     f"{get_schedule_date(1)}❗️")
-                message_answer += f"\n\n !!! Перенесено на " \
-                                  f"{get_schedule_date(1)} !!!"
+                await message.answer(f"❗️ Ваша заявка перенесена на "
+                                     f"{get_schedule_date(1)} ❗️",
+                                     parse_mode='Markdown')
+                message_answer += f"\n ❗️❗️❗️ Перенесено на " \
+                                  f"{get_schedule_date(1)} ❗️❗️❗️"
                 await bot.send_message(chat_id=CHAT_ID,
                                        text=message_answer,
                                        parse_mode='Markdown')

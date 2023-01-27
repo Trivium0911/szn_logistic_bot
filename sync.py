@@ -14,13 +14,13 @@ def get_day() -> int:
     return week_day
 
 
-def get_schedule_date(days: int) -> datetime:
+def get_schedule_date(days: int) -> datetime.date:
     date = datetime.now() + timedelta(days=days)
-    return date
+    return date.date()
 
 
-def get_schedule_hours(hours: int) -> datetime:
+def get_schedule_hours(hours: int) -> datetime.date:
     date = datetime.now() + timedelta(hours=hours)
-    return date
+    return date.date()
 
 
