@@ -1,10 +1,9 @@
 from keyboards import get_main_kb, get_register_check_kb, get_deliver_kb, \
-    get_cancel_kb, get_admin_kb, get_stats_kb
+    get_cancel_kb
 from sync import get_hour, get_day, get_schedule_date, get_schedule_hours
 from sqlite import start_db, edit_profile, create_user, check_user, \
-    edit_deliver, get_user_info, get_statistic
+     get_user_info
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from states import RegisterStatesGroup, DeliverStatesGroup
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ReplyKeyboardRemove
@@ -18,25 +17,17 @@ import os
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 bot = Bot(BOT_TOKEN)
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
-scheduler = AsyncIOScheduler()
-owner_id = (os.getenv("OWNER_ID"), os.getenv("CREATOR_ID"))
 CHAT_ID = os.getenv('CHAT_ID')
 
 
 async def on_startup(_):
-    scheduler.start()
     await start_db()
 
 
 @dp.message_handler(Text(equals="Отмена"))
 async def statistic_menu(message: types.Message) -> None:
-    match str(message.from_user.id) in owner_id:
-        case True:
-            await message.answer('Добро пожаловать',
-                                 reply_markup=get_admin_kb())
-        case False:
-            await message.answer('Добро пожаловать',
-                                 reply_markup=get_main_kb())
+    await message.answer('Добро пожаловать',
+                         reply_markup=get_main_kb())
     await message.delete()
 
 
@@ -55,20 +46,8 @@ async def cansel_func(message: types.Message, state: FSMContext) -> None:
 
 @dp.message_handler(commands='start')
 async def start_func(message: types.Message) -> None:
-    match str(message.from_user.id) in owner_id:
-        case True:
-            await message.answer('Добро пожаловать',
-                         reply_markup=get_admin_kb())
-        case False:
-            await message.answer('Добро пожаловать',
+    await message.answer('Добро пожаловать',
                          reply_markup=get_main_kb())
-    await message.delete()
-
-
-@dp.message_handler(Text(equals="Статистика"))
-async def statistic_menu(message: types.Message) -> None:
-    await message.answer('Вы перешли в раздел статистики.',
-                         reply_markup=get_stats_kb())
     await message.delete()
 
 
@@ -85,13 +64,7 @@ async def start_func(message: types.Message, state: FSMContext) -> None:
     async with state.proxy() as data:
         await edit_profile(state=state, user_id=message.from_user.id)
     await state.finish()
-    match str(message.from_user.id) in owner_id:
-        case True:
-            await message.answer(text="Операция успешно завершена. \n"
-                                      "Вы вернулись в главное меню",
-                                       reply_markup=get_admin_kb())
-        case False:
-            await message.answer(text="Операция успешно завершена. \n"
+    await message.answer(text="Операция успешно завершена. \n"
                                       "Вы вернулись в главное меню",
                                        reply_markup=get_main_kb())
 
@@ -235,71 +208,53 @@ async def start_back_func(message: types.Message, state: FSMContext) -> None:
     async with state.proxy() as data:
         hour = get_hour()
         day = get_day()
-        await edit_deliver(state, message.from_user.id, hour)
         message_answer = f"{get_user_info(message.from_user.id)}\n" \
                          f"***{data['package']}***"
         match day in (5,6):
             case True if day == 5:
-                scheduler.add_job(bot.send_message(chat_id=CHAT_ID,
+                await message.answer(f"❗️Ваша заявка перенесена на "
+                                     f"{get_schedule_date(2)}❗️")
+                message_answer += f"\n\n ❗️❗️❗️ Перенесено на " \
+                                  f"{get_schedule_date(2)} ❗️❗️❗️"
+                await bot.send_message(chat_id=CHAT_ID,
                                        text=message_answer,
-                                       parse_mode='Markdown'), "date",
-                                  run_date=get_schedule_date(2), args=(dp,))
+                                       parse_mode='Markdown')
+
             case True if day == 6:
-                scheduler.add_job(bot.send_message(chat_id=CHAT_ID,
-                                                   text=message_answer,
-                                       parse_mode='Markdown'), "date",
-                                  run_date=get_schedule_date(1), args=(dp,))
+                await message.answer(f"❗️Ваша заявка перенесена на "
+                                     f"{get_schedule_date(1)}❗️")
+                message_answer += f"\n\n ❗️❗️❗️ Перенесено на " \
+                                  f"{get_schedule_date(1)} ❗️❗️❗️"
+                await bot.send_message(chat_id=CHAT_ID,
+                                       text=message_answer,
+                                       parse_mode='Markdown')
+
+            case False if day == 4 and hour not in [i for i in range(6, 18)]:
+                    await message.answer(f"❗️Ваша заявка перенесена на "
+                                    f"{get_schedule_date(2)}❗️")
+                    message_answer += f"\n\n ❗️❗️❗️ Перенесено на " \
+                          f"{get_schedule_date(2)} ❗️❗️❗️"
+                    await bot.send_message(chat_id=CHAT_ID,
+                               text=message_answer,
+                               parse_mode='Markdown')
+
             case False if hour not in [i for i in range(6, 18)]:
-                scheduler.add_job(bot.send_message(chat_id=CHAT_ID,
-                                           text=message_answer,
-                                           parse_mode='Markdown'), "date",
-                                  run_date=get_schedule_hours(7), args=(dp,))
+                await message.answer(f"❗️Ваша заявка перенесена на "
+                                     f"{get_schedule_date(1)}❗️")
+                message_answer += f"\n\n !!! Перенесено на " \
+                                  f"{get_schedule_date(1)} !!!"
+                await bot.send_message(chat_id=CHAT_ID,
+                                       text=message_answer,
+                                       parse_mode='Markdown')
+
             case False if 6 <= hour < 18:
                 await bot.send_message(chat_id=CHAT_ID,
                                        text=message_answer,
                                        parse_mode='Markdown')
     await state.finish()
-    match str(message.from_user.id) in owner_id:
-        case True:
-            await message.answer(text="Операция успешно завершена. \n"
-                                      "Вы вернулись в главное меню",
-                                 reply_markup=get_admin_kb())
-        case False:
-            await message.answer(text="Операция успешно завершена. \n"
-                                      "Вы вернулись в главное меню",
-                                 reply_markup=get_main_kb())
-
-
-@dp.message_handler(Text(equals="За последний день"))
-async def statistic_1_day(message: types.Message) -> None:
-    result = get_statistic(1)
-    await message.answer(f"Статистика за прошлый день: \n\n"
-                         f"{result}",
-                         reply_markup=get_admin_kb())
-
-
-@dp.message_handler(Text(equals="Неделя"))
-async def statistic_7_days(message: types.Message) -> None:
-    result = get_statistic(7)
-    await message.answer(f"Статистика за неделю: \n\n"
-                         f"{result}",
-                         reply_markup=get_admin_kb())
-
-
-@dp.message_handler(Text(equals="Месяц"))
-async def statistic_month(message: types.Message) -> None:
-    result = get_statistic(30)
-    await message.answer(f"Статистика за месяц: \n\n"
-                         f"{result}",
-                         reply_markup=get_admin_kb())
-
-
-@dp.message_handler(Text(equals="Год"))
-async def statistic_year(message: types.Message) -> None:
-    result = get_statistic(365)
-    await message.answer(f"Статистика за год: \n\n"
-                         f"{result}",
-                         reply_markup=get_admin_kb())
+    await message.answer(text="Операция успешно завершена. \n"
+                            "Вы вернулись в главное меню",
+                            reply_markup=get_main_kb())
 
 
 if __name__ == '__main__':

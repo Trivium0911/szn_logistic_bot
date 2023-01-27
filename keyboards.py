@@ -25,16 +25,3 @@ def get_cancel_kb() -> ReplyKeyboardMarkup:
     keyboard.add('Отмена')
     return keyboard
 
-
-def get_admin_kb() -> ReplyKeyboardMarkup:
-    start_buttons = ['Регистрация', 'Оформить заказ']
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add(*start_buttons).add('Статистика')
-    return keyboard
-
-
-def get_stats_kb() -> ReplyKeyboardMarkup:
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add('Год', 'Месяц').add('Неделя', 'За последний день')
-    keyboard.add('Отмена')
-    return keyboard

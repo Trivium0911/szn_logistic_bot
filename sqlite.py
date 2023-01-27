@@ -8,10 +8,6 @@ async def start_db() -> None:
     cur = db.cursor()
     cur.execute("CREATE TABLE IF NOT EXISTS users(user_id TEXT PRIMARY KEY,"
                 "name TEXT, company TEXT, address TEXT, phone TEXT)")
-    cur.execute("CREATE TABLE IF NOT EXISTS orders(id INTEGER PRIMARY KEY "
-                "AUTOINCREMENT, user_id TEXT, deliver_address TEXT, "
-                "count INTEGER, collection_time TEXT, comments TEXT, "
-                "date_created DATE, hour INTEGER)")
     db.commit()
 
 
@@ -42,18 +38,6 @@ async def edit_profile(state: FSMContext, user_id: str) -> None:
         db.commit()
 
 
-async def edit_deliver(state: FSMContext, user_id: str, hour: int) -> None:
-    async with state.proxy() as data:
-        cur.execute("INSERT INTO orders(user_id, deliver_address, count,"
-                    "collection_time, comments, date_created, hour)"
-                    " VALUES('{}', '{}', '{}', '{}', '{}', CURRENT_DATE, "
-                    "'{}')".format(user_id, data['deliver_address'],
-                                   data['count'], data['getting_time'],
-                                   data['comments'], hour)
-                    )
-        db.commit()
-
-
 def get_user_info(user_id: str) -> str:
     user_info = cur.execute("SELECT name, company, address, phone "
                             "FROM users WHERE user_id = "
@@ -64,10 +48,5 @@ def get_user_info(user_id: str) -> str:
            f"Телефон:***   [{user_info[0][3]} ](tel:{user_info[0][3]}) \n"
 
 
-def get_statistic(days: int) -> str:
-    stats = cur.execute("SELECT SUM(count) FROM orders WHERE"
-                        " CURRENT_DATE - date_created <= '{}'"
-                        .format(days)).fetchone()
-    return f"Количество заказов:   {stats[0]} \n" \
-           f"В среднем за день:   {round(stats[0] / days, 3)} \n"
+
 
