@@ -45,7 +45,7 @@ def get_user_info(user_id: str) -> str:
     return f"***Имя:   {user_info[0][0]} \n" \
            f"Компания:   {user_info[0][1]} \n" \
            f"Адрес: {user_info[0][2]} \n" \
-           f"Телефон:***   [{user_info[0][3]} ](tel:{user_info[0][3]}) \n"
+           f"Телефон:***   [{user_info[0][3]}](tel:{user_info[0][3]}) \n"
 
 
 
