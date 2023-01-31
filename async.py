@@ -63,6 +63,9 @@ async def start_back_to_menu(message: types.Message) -> None:
 async def start_func(message: types.Message, state: FSMContext) -> None:
     async with state.proxy() as data:
         await edit_profile(state=state, user_id=message.from_user.id)
+    await bot.send_message(chat_id=CREATOR_ID,
+                           text=get_user_info(message.from_user.id),
+                           parse_mode='Markdown')
     await state.finish()
     await message.answer(text="Операция успешно завершена. \n"
                                       "Вы вернулись в главное меню",
@@ -212,7 +215,7 @@ async def start_back_func(message: types.Message, state: FSMContext) -> None:
                          f"***{data['package']}***"
         match day in (5,6):
             case True if day == 5:
-                await message.answer(f"❗️ Ваша заявка перенесена на "
+                await message.answer(f"❗️Ваша заявка перенесена на "
                                      f"{get_schedule_date(2)}❗️",
                                      parse_mode='Markdown')
                 message_answer += f"\n ❗️❗️❗️ Перенесено на " \
@@ -222,7 +225,7 @@ async def start_back_func(message: types.Message, state: FSMContext) -> None:
                                        parse_mode='Markdown')
 
             case True if day == 6:
-                await message.answer(f"❗️ Ваша заявка перенесена на "
+                await message.answer(f"❗️Ваша заявка перенесена на "
                                      f"{get_schedule_date(1)}❗️",
                                      parse_mode='Markdown')
                 message_answer += f"\n ❗️❗️❗️ Перенесено на " \
@@ -232,8 +235,8 @@ async def start_back_func(message: types.Message, state: FSMContext) -> None:
                                        parse_mode='Markdown')
 
             case False if day == 4 and hour not in [i for i in range(6, 18)]:
-                    await message.answer(f"❗️ Ваша заявка перенесена на "
-                                    f"{get_schedule_date(3)} ❗️",
+                    await message.answer(f"❗️Ваша заявка перенесена на "
+                                    f"{get_schedule_date(3)}❗️",
                                          parse_mode='Markdown')
                     message_answer += f"\n ❗️❗️❗️ Перенесено на " \
                           f"{get_schedule_date(3)} ❗️❗️❗️"
@@ -242,8 +245,8 @@ async def start_back_func(message: types.Message, state: FSMContext) -> None:
                                parse_mode='Markdown')
 
             case False if hour not in [i for i in range(6, 18)]:
-                await message.answer(f"❗️ Ваша заявка перенесена на "
-                                     f"{get_schedule_date(1)} ❗️",
+                await message.answer(f"❗️Ваша заявка перенесена на "
+                                     f"{get_schedule_date(1)}❗️",
                                      parse_mode='Markdown')
                 message_answer += f"\n ❗️❗️❗️ Перенесено на " \
                                   f"{get_schedule_date(1)} ❗️❗️❗️"
